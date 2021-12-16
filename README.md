@@ -79,14 +79,11 @@ Run the API server by using any of the following commands. Please replace `my_au
 and `my_auth0_api_domain` values appropriate as per your setup using instructions above.
 
 ```shell
-# with a populated env.yaml present in current directory
-go run .
+# with a populated env.yaml/dev.yaml present in current directory
 
-# Alternatively, if env.yaml is not present, you can also pass values using CLI parameters  
-go run . -a my_auth0_api_audience -d my_auth0_api_domain
+./run.sh
 
-# OR, you can pass values using shell variables on CLI
-AUTH0_AUDIENCE=my_auth0_api_audience AUTH0_DOMAIN=my_auth0_api_domain go run .
+```
 
 # OR, you may also expose the values as environment variable upfront
 export AUTH0_AUDIENCE=my_auth0_api_audience
@@ -209,3 +206,63 @@ Status: 200 OK
   "message": "The API successfully recognized you as an admin."
 }
 ```
+
+### Get Version
+
+```shell
+GET /version
+```
+
+#### Response
+
+```shell
+Status: 200 OK
+```
+
+```json
+{"version":"7819552-dirty"}
+```
+
+### Get ping
+
+```shell
+GET /ping
+```
+
+#### Response
+
+```shell
+Status: 200 OK
+```
+
+```text
+pong
+```
+
+## Data Storage
+
+Data is stored in a postgres database by default.
+
+## Query Logic
+
+Find requests `GET /api/messages` uses a url query parser to allow very complex logic including AND, OR and precedence operators.
+Ref: https://github.com/snowzach/queryp
+
+## Swagger Documentation
+
+Swagger documentation available at `http://<host>:<port>/api-docs/` path. The documentation is automatically generated.
+
+## Profiler
+
+Profiler is available at `http://<host>:6060/debug/pprof/` path. We can enable or disable using the config.
+
+## Logs
+
+The application logs can be found in `logs/oauth.log` file by default. We can change using the settings.go file.
+
+Aditionally we can use Beats to ship logs from this file to Elastic search and use Kibana to visualize.
+
+## Prometheus
+
+The prometheus is available at `http://<host>:<port>/prometheus/` path. Now we can use Grafana to connect this datasource and visualize the metrics.
+

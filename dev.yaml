@@ -1,0 +1,5 @@
+auth0-audience: https://api.example.com
+auth0-domain: dev-qzkixsmr.eu.auth0.com
+auth0-clientID: 8O50umOS1OiLfDJaY6ANhcOzQdTEIfS0
+auth0-clientSecret: qZMCJfF8mztTSiKQy6lAEyCtecWX1zaJJHuvp_zDjxa9w_eXiSvLd0EB8oIbJ9Da
+auth0-callbackURL: http://localhost:4040/callback

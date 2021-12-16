@@ -1,0 +1,176 @@
+basePath: /api
+definitions:
+  entities.Message:
+    properties:
+      date:
+        description: Date (Auto-Generated)
+        type: string
+      id:
+        description: Id (Auto-Generated)
+        type: string
+      text:
+        type: string
+    type: object
+host: localhost:4040
+info:
+  contact:
+    email: marianasilvago1234@gmail.com
+    name: API Support
+    url: https://github.com/Marianasilvago
+  description: This is a oauth service.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /messages:
+    get:
+      description: Find messages
+      operationId: MessageFind
+      parameters:
+      - description: id
+        in: query
+        name: id
+        type: string
+      - description: offset
+        in: query
+        name: offset
+        type: integer
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      - description: query
+        in: query
+        name: sort
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Message'
+            type: array
+        "400":
+          description: Invalid Argument
+          schema:
+            type: string
+        "500":
+          description: Internal Error
+          schema:
+            type: string
+      summary: Find messages
+      tags:
+      - messages
+    post:
+      description: Save a message
+      operationId: MessageSave
+      parameters:
+      - description: Message
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Message'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Message'
+        "400":
+          description: Invalid Argument
+          schema:
+            type: string
+        "500":
+          description: Internal Error
+          schema:
+            type: string
+      summary: Save a message
+      tags:
+      - messages
+  /messages/{id}:
+    delete:
+      description: Delete a msg by ID
+      operationId: MessageDeleteByID
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: Success
+        "400":
+          description: Invalid Argument
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Error
+          schema:
+            type: string
+      summary: Delete a msg by ID
+      tags:
+      - messages
+    get:
+      description: Get a Message by ID
+      operationId: MessageGetByID
+      parameters:
+      - description: ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Message'
+        "400":
+          description: Invalid Argument
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema:
+            type: string
+        "500":
+          description: Internal Error
+          schema:
+            type: string
+      summary: Get a Message by ID
+      tags:
+      - messages
+    put:
+      description: updates a message
+      operationId: MessageUpdate
+      parameters:
+      - description: Message
+        in: body
+        name: message
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Message'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Message'
+        "400":
+          description: Invalid Argument
+          schema:
+            type: string
+        "500":
+          description: Internal Error
+          schema:
+            type: string
+      summary: updates a message
+      tags:
+      - messages
+swagger: "2.0"
