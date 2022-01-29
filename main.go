@@ -8,14 +8,21 @@ import (
 
 const corsAllowedDomain = "http://localhost:4040"
 
-type message struct {
-	Message string `json:"message"`
+type Metadata struct {
+	Api 	string `json:"api"`
+	Branch 	string `json:"branch"`
+}
+
+type ApiResponse struct {
+	Metadata Metadata `json:"metadata"`
+	Text string `json:"text"`
 }
 
 var (
-	publicMessage    = &message{"The API doesn't require an access token to share this message."}
-	protectedMessage = &message{"The API successfully validated your access token."}
-	adminMessage     = &message{"The API successfully recognized you as an admin."}
+	metadata			= Metadata{"api_standard-library_golang_hello-world", "starter"}
+	publicMessage    	= ApiResponse{metadata, "This is a public message."}
+	protectedMessage 	= ApiResponse{metadata, "This is a protected message."}
+	adminMessage     	= ApiResponse{metadata, "This is an admin message."}
 )
 
 func publicApiHandler(rw http.ResponseWriter, _ *http.Request) {
@@ -30,7 +37,7 @@ func adminApiHandler(rw http.ResponseWriter, _ *http.Request) {
 	sendMessage(rw, adminMessage)
 }
 
-func sendMessage(rw http.ResponseWriter, data *message) {
+func sendMessage(rw http.ResponseWriter, data ApiResponse) {
 	rw.Header().Add("Content-Type", "application/json")
 	bytes, err := json.Marshal(data)
 	if err != nil {
@@ -61,7 +68,7 @@ func handleCORS(next http.Handler) http.Handler {
 	})
 }
 
-func main() {
+func main() {	
 	router := http.NewServeMux()
 	router.Handle("/", http.NotFoundHandler())
 	router.Handle("/api/messages/public", http.HandlerFunc(publicApiHandler))
