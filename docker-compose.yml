@@ -1,0 +1,13 @@
+---
+
+version: "3.8"
+services:
+  api:
+    build: .
+    image: api_standard-library_golang_hello-world:starter
+    env_file:
+      - .env
+    ports:
+      - 6060:6060
+
+...
