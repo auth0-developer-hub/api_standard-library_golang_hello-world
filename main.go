@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 
+	"github.com/spf13/viper"
 	"github.com/unrolled/secure"
 	"github.com/rs/cors"
 )
-
-const corsAllowedDomain = "http://localhost:4040"
 
 type Metadata struct {
 	Api 	string `json:"api"`
@@ -27,6 +27,24 @@ var (
 	protectedMessage 	= ApiResponse{metadata, "This is a protected message."}
 	adminMessage     	= ApiResponse{metadata, "This is an admin message."}
 )
+
+func safeGetEnv(key string) string {
+	if os.Getenv("APP_ENV") == "" {
+		viper.SetConfigFile(".env")
+		readEnvFile := viper.ReadInConfig()
+		if readEnvFile != nil {
+			log.Fatalf("Error while reading the .env file %s", readEnvFile)
+		}
+		if !viper.IsSet(key) {
+			log.Fatalf("The environment variable '%s' doesn't exist or is not set", key)
+		}
+		return viper.GetString(key)
+	}
+	if os.Getenv(key) == "" {
+		log.Fatalf("The environment variable '%s' doesn't exist or is not set", key)
+	}
+	return os.Getenv(key)
+}
 
 func publicApiHandler(rw http.ResponseWriter, _ *http.Request) {
 	sendMessage(rw, publicMessage)
@@ -64,7 +82,7 @@ func handleCacheControl(next http.Handler) http.Handler {
 	})
 }
 
-func main() {	
+func main() {
 	router := http.NewServeMux()
 	router.Handle("/", http.NotFoundHandler())
 	router.Handle("/api/messages/public", http.HandlerFunc(publicApiHandler))
@@ -72,14 +90,14 @@ func main() {
 	router.Handle("/api/messages/admin", http.HandlerFunc(adminApiHandler))
 
 	c := cors.New(cors.Options{
-		AllowedOrigins: []string{"http://localhost:4040"},
+		AllowedOrigins: []string{safeGetEnv("CLIENT_ORIGIN_URL")},
 		AllowedMethods: []string{"GET"},
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
 		MaxAge: 86400,
 	})
 	routerWithCORS := c.Handler(router)
 	secureMiddleware := secure.New(secure.Options{
-        STSSeconds:            31536000,
+        STSSeconds:            	31536000,
         STSIncludeSubdomains:  	true,
         STSPreload:            	true,
         FrameDeny:             	true,
@@ -93,7 +111,7 @@ func main() {
 	finalHandler := secureMiddleware.Handler(routerWithCacheControl)
 
 	server := &http.Server{
-		Addr:    ":6060",
+		Addr:    ":" + safeGetEnv("PORT"),
 		Handler: finalHandler,
 	}
 
