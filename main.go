@@ -21,11 +21,16 @@ type ApiResponse struct {
 	Text string `json:"text"`
 }
 
+type ErrorMessage struct {
+	Message string `json:"message"`
+}
+
 var (
 	metadata			= Metadata{"api_standard-library_golang_hello-world", "starter"}
 	publicMessage    	= ApiResponse{metadata, "This is a public message."}
 	protectedMessage 	= ApiResponse{metadata, "This is a protected message."}
 	adminMessage     	= ApiResponse{metadata, "This is an admin message."}
+	notFoundMessage		= ErrorMessage{"Not Found"}
 )
 
 func safeGetEnv(key string) string {
@@ -82,9 +87,20 @@ func handleCacheControl(next http.Handler) http.Handler {
 	})
 }
 
+func notFoundHandler(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Add("Content-Type", "application/json")
+	rw.WriteHeader(http.StatusNotFound)
+	jsonResp, err := json.Marshal(notFoundMessage)
+	if err != nil {
+		log.Fatalf("Error happened in JSON marshal. Err: %s", err)
+	}
+	rw.Write(jsonResp)
+	return
+}
+
 func main() {
 	router := http.NewServeMux()
-	router.Handle("/", http.NotFoundHandler())
+	router.Handle("/", http.HandlerFunc(notFoundHandler))
 	router.Handle("/api/messages/public", http.HandlerFunc(publicApiHandler))
 	router.Handle("/api/messages/protected", http.HandlerFunc(protectedApiHandler))
 	router.Handle("/api/messages/admin", http.HandlerFunc(adminApiHandler))
