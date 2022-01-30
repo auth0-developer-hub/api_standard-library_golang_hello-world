@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"github.com/unrolled/secure"
+	"github.com/rs/cors"
 )
 
 const corsAllowedDomain = "http://localhost:4040"
@@ -50,21 +53,14 @@ func sendMessage(rw http.ResponseWriter, data ApiResponse) {
 	}
 }
 
-func handleCORS(next http.Handler) http.Handler {
+func handleCacheControl(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		headers := rw.Header()
-		// Allow-Origin header shall be part of ALL the responses
-		headers.Add("Access-Control-Allow-Origin", corsAllowedDomain)
-		if req.Method != http.MethodOptions {
-			next.ServeHTTP(rw, req)
-			return
-		}
-		// process an HTTP OPTIONS preflight request
-		headers.Add("Access-Control-Allow-Headers", "Authorization")
-		rw.WriteHeader(http.StatusNoContent)
-		if _, err := rw.Write(nil); err != nil {
-			log.Print("http response (options) write error", err)
-		}
+		headers.Add("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate")
+		headers.Add("Pragma", "no-cache")
+		headers.Add("Expires", "0")
+		next.ServeHTTP(rw, req)
+		return
 	})
 }
 
@@ -74,11 +70,31 @@ func main() {
 	router.Handle("/api/messages/public", http.HandlerFunc(publicApiHandler))
 	router.Handle("/api/messages/protected", http.HandlerFunc(protectedApiHandler))
 	router.Handle("/api/messages/admin", http.HandlerFunc(adminApiHandler))
-	routerWithCORS := handleCORS(router)
+
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"http://localhost:4040"},
+		AllowedMethods: []string{"GET"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+		MaxAge: 86400,
+	})
+	routerWithCORS := c.Handler(router)
+	secureMiddleware := secure.New(secure.Options{
+        STSSeconds:            31536000,
+        STSIncludeSubdomains:  	true,
+        STSPreload:            	true,
+        FrameDeny:             	true,
+		ForceSTSHeader:			true,
+        ContentTypeNosniff:    	true,
+        BrowserXssFilter:      	true,
+		CustomBrowserXssValue:	"0",
+        ContentSecurityPolicy: 	"default-src 'self', frame-ancestors 'none'",
+    })
+	routerWithCacheControl := handleCacheControl(routerWithCORS)
+	finalHandler := secureMiddleware.Handler(routerWithCacheControl)
 
 	server := &http.Server{
 		Addr:    ":6060",
-		Handler: routerWithCORS,
+		Handler: finalHandler,
 	}
 
 	log.Printf("API server listening on %s", server.Addr)
