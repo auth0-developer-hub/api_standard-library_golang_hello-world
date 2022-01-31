@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/spf13/viper"
+	"github.com/joho/godotenv"
 	"github.com/unrolled/secure"
 	"github.com/rs/cors"
 )
@@ -35,15 +35,10 @@ var (
 
 func safeGetEnv(key string) string {
 	if os.Getenv("APP_ENV") == "" {
-		viper.SetConfigFile(".env")
-		readEnvFile := viper.ReadInConfig()
-		if readEnvFile != nil {
-			log.Fatalf("Error while reading the .env file %s", readEnvFile)
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatalf("Error while reading the .env file %s", err)
 		}
-		if !viper.IsSet(key) {
-			log.Fatalf("The environment variable '%s' doesn't exist or is not set", key)
-		}
-		return viper.GetString(key)
 	}
 	if os.Getenv(key) == "" {
 		log.Fatalf("The environment variable '%s' doesn't exist or is not set", key)
@@ -51,28 +46,34 @@ func safeGetEnv(key string) string {
 	return os.Getenv(key)
 }
 
-func publicApiHandler(rw http.ResponseWriter, _ *http.Request) {
-	sendMessage(rw, publicMessage)
+func publicApiHandler(rw http.ResponseWriter, r *http.Request) {
+	sendMessage(rw, r, publicMessage)
 }
 
-func protectedApiHandler(rw http.ResponseWriter, _ *http.Request) {
-	sendMessage(rw, protectedMessage)
+func protectedApiHandler(rw http.ResponseWriter, r *http.Request) {
+	sendMessage(rw, r, protectedMessage)
 }
 
-func adminApiHandler(rw http.ResponseWriter, _ *http.Request) {
-	sendMessage(rw, adminMessage)
+func adminApiHandler(rw http.ResponseWriter, r *http.Request) {
+	sendMessage(rw, r, adminMessage)
 }
 
-func sendMessage(rw http.ResponseWriter, data ApiResponse) {
+func sendMessage(rw http.ResponseWriter, r *http.Request, data ApiResponse) {
 	rw.Header().Add("Content-Type", "application/json")
 	bytes, err := json.Marshal(data)
 	if err != nil {
 		log.Print("json conversion error", err)
 		return
 	}
-	_, err = rw.Write(bytes)
-	if err != nil {
-		log.Print("http response write error", err)
+	switch r.Method {
+		case "GET":
+			_, err = rw.Write(bytes)
+			if err != nil {
+				log.Print("http response write error", err)
+			}
+		default:
+			rw.WriteHeader(http.StatusNotImplemented)
+			rw.Write([]byte(http.StatusText(http.StatusNotImplemented)))
 	}
 }
 
