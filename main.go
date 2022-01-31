@@ -9,6 +9,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/unrolled/secure"
 	"github.com/rs/cors"
+	"github.com/gorilla/mux"
 )
 
 type Metadata struct {
@@ -65,15 +66,9 @@ func sendMessage(rw http.ResponseWriter, r *http.Request, data ApiResponse) {
 		log.Print("json conversion error", err)
 		return
 	}
-	switch r.Method {
-		case "GET":
-			_, err = rw.Write(bytes)
-			if err != nil {
-				log.Print("http response write error", err)
-			}
-		default:
-			rw.WriteHeader(http.StatusNotImplemented)
-			rw.Write([]byte(http.StatusText(http.StatusNotImplemented)))
+	_, err = rw.Write(bytes)
+	if err != nil {
+		log.Print("http response write error", err)
 	}
 }
 
@@ -100,19 +95,20 @@ func notFoundHandler(rw http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	router := http.NewServeMux()
-	router.Handle("/", http.HandlerFunc(notFoundHandler))
-	router.Handle("/api/messages/public", http.HandlerFunc(publicApiHandler))
-	router.Handle("/api/messages/protected", http.HandlerFunc(protectedApiHandler))
-	router.Handle("/api/messages/admin", http.HandlerFunc(adminApiHandler))
+	router := mux.NewRouter()
+	router.HandleFunc("/api/messages/public", publicApiHandler).Methods(http.MethodGet)
+	router.HandleFunc("/api/messages/protected", protectedApiHandler).Methods(http.MethodGet)
+	router.HandleFunc("/api/messages/admin", adminApiHandler).Methods(http.MethodGet)
+	router.NotFoundHandler = http.HandlerFunc(notFoundHandler)
 
-	c := cors.New(cors.Options{
+	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins: []string{safeGetEnv("CLIENT_ORIGIN_URL")},
 		AllowedMethods: []string{"GET"},
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
 		MaxAge: 86400,
 	})
-	routerWithCORS := c.Handler(router)
+	routerWithCORS := corsMiddleware.Handler(router)
+
 	secureMiddleware := secure.New(secure.Options{
         STSSeconds:            	31536000,
         STSIncludeSubdomains:  	true,
@@ -124,8 +120,9 @@ func main() {
 		CustomBrowserXssValue:	"0",
         ContentSecurityPolicy: 	"default-src 'self', frame-ancestors 'none'",
     })
-	routerWithCacheControl := handleCacheControl(routerWithCORS)
-	finalHandler := secureMiddleware.Handler(routerWithCacheControl)
+	routerWithSecurityHeaders := secureMiddleware.Handler(routerWithCORS)
+
+	finalHandler := handleCacheControl(routerWithSecurityHeaders)
 
 	server := &http.Server{
 		Addr:    ":" + safeGetEnv("PORT"),
