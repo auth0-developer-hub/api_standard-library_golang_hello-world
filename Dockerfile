@@ -7,6 +7,9 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 COPY main.go ./
+COPY models models
+COPY middleware middleware
+COPY router router
 RUN go build -o api-server
 
 FROM gcr.io/distroless/base-debian10@sha256:586e10ceb097684dcd3e455dbb6d4141f3dd28986719de487d76d4c7c9da1a35
