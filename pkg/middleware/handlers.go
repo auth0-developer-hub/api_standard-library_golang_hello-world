@@ -1,19 +1,19 @@
 package middleware
 
 import (
-	"net/http"
 	"encoding/json"
 	"log"
+	"net/http"
 
-	"github.com/auth0-blog/hello-golang-api/models"
+	"github.com/auth0-blog/hello-golang-api/pkg/models"
 )
 
 var (
-	metadata			= models.Metadata{"api_standard-library_golang_hello-world", "starter"}
-	publicMessage    	= models.ApiResponse{metadata, "This is a public message."}
-	protectedMessage 	= models.ApiResponse{metadata, "This is a protected message."}
-	adminMessage     	= models.ApiResponse{metadata, "This is an admin message."}
-	notFoundMessage		= models.ErrorMessage{"Not Found"}
+	metadata         = models.Metadata{"api_standard-library_golang_hello-world", "starter"}
+	publicMessage    = models.ApiResponse{metadata, "This is a public message."}
+	protectedMessage = models.ApiResponse{metadata, "This is a protected message."}
+	adminMessage     = models.ApiResponse{metadata, "This is an admin message."}
+	notFoundMessage  = models.ErrorMessage{"Not Found"}
 )
 
 func PublicApiHandler(rw http.ResponseWriter, r *http.Request) {

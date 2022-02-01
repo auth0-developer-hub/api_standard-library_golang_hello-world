@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/auth0-blog/hello-golang-api/router"
-    "github.com/auth0-blog/hello-golang-api/middleware"
+	"github.com/auth0-blog/hello-golang-api/pkg/middleware"
+	"github.com/auth0-blog/hello-golang-api/pkg/router"
 
 	"github.com/joho/godotenv"
-	"github.com/unrolled/secure"
 	"github.com/rs/cors"
+	"github.com/unrolled/secure"
 )
 
 func safeGetEnv(key string) string {
@@ -34,21 +34,21 @@ func main() {
 		AllowedOrigins: []string{safeGetEnv("CLIENT_ORIGIN_URL")},
 		AllowedMethods: []string{"GET"},
 		AllowedHeaders: []string{"Content-Type", "Authorization"},
-		MaxAge: 86400,
+		MaxAge:         86400,
 	})
 	routerWithCORS := corsMiddleware.Handler(router)
 
 	secureMiddleware := secure.New(secure.Options{
-        STSSeconds:            	31536000,
-        STSIncludeSubdomains:  	true,
-        STSPreload:            	true,
-        FrameDeny:             	true,
-		ForceSTSHeader:			true,
-        ContentTypeNosniff:    	true,
-        BrowserXssFilter:      	true,
-		CustomBrowserXssValue:	"0",
-        ContentSecurityPolicy: 	"default-src 'self', frame-ancestors 'none'",
-    })
+		STSSeconds:            31536000,
+		STSIncludeSubdomains:  true,
+		STSPreload:            true,
+		FrameDeny:             true,
+		ForceSTSHeader:        true,
+		ContentTypeNosniff:    true,
+		BrowserXssFilter:      true,
+		CustomBrowserXssValue: "0",
+		ContentSecurityPolicy: "default-src 'self', frame-ancestors 'none'",
+	})
 	routerWithSecurityHeaders := secureMiddleware.Handler(routerWithCORS)
 
 	finalHandler := middleware.HandleCacheControl(routerWithSecurityHeaders)
