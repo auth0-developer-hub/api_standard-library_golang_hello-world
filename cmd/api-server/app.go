@@ -30,15 +30,13 @@ type App struct {
 
 func (app *App) RunServer() {
 	router := router.Router(app.Config.Audience, app.Config.Domain)
-	corsMiddleware := cors.New(app.Config.CorsOptions)
-	routerWithCORS := corsMiddleware.Handler(router)
 
-	secureMiddleware := secure.New(app.Config.SecureOptions)
-	finalHandler := secureMiddleware.Handler(routerWithCORS)
+	router = cors.New(app.Config.CorsOptions).Handler(router)
+	router = secure.New(app.Config.SecureOptions).Handler(router)
 
 	server := &http.Server{
 		Addr:    ":" + app.Config.Port,
-		Handler: finalHandler,
+		Handler: router,
 	}
 
 	log.Printf("API server listening on %s", server.Addr)
