@@ -20,6 +20,8 @@ type Config struct {
 	Port          string
 	SecureOptions secure.Options
 	CorsOptions   cors.Options
+	Audience      string
+	Domain        string
 }
 
 type App struct {
@@ -27,7 +29,7 @@ type App struct {
 }
 
 func (app *App) RunServer() {
-	router := router.Router()
+	router := router.Router(app.Config.Audience, app.Config.Domain)
 	corsMiddleware := cors.New(app.Config.CorsOptions)
 	routerWithCORS := corsMiddleware.Handler(router)
 
