@@ -6,14 +6,14 @@ import (
 	"github.com/auth0-developer-hub/api_standard-library_golang_hello-world/pkg/middleware"
 )
 
-func Router() http.Handler {
+func Router(audience, domain string) http.Handler {
 
 	router := http.NewServeMux()
 
 	router.HandleFunc("/", middleware.NotFoundHandler)
 	router.HandleFunc("/api/messages/public", middleware.PublicApiHandler)
-	router.HandleFunc("/api/messages/protected", middleware.ProtectedApiHandler)
-	router.HandleFunc("/api/messages/admin", middleware.AdminApiHandler)
+	router.Handle("/api/messages/protected", middleware.ValidateJWT(audience, domain, http.HandlerFunc(middleware.ProtectedApiHandler)))
+	router.Handle("/api/messages/admin", middleware.ValidateJWT(audience, domain, http.HandlerFunc(middleware.AdminApiHandler)))
 
 	return middleware.HandleCacheControl(router)
 }
